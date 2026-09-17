@@ -80,7 +80,7 @@ export default function Page() {
           <h1>The history behind<br /><em>the vehicle.</em></h1>
           <p className="hero-lede">A clear, independent vehicle history report that helps you buy with confidence — not assumptions.</p>
           <div className="hero-actions"><a className="button button-dark" href="#start">Check a VIN <span>↗</span></a><a className="text-link" href="#sample">See a sample report <span>↓</span></a></div>
-          <p className="microcopy">Secure checkout · Report delivered digitally · $24.99 per VIN</p>
+          <p className="microcopy">Secure checkout · Report delivered digitally · $9.99 per VIN</p>
         </div>
         <div className="hero-art">
           <img src="/vehicle-hero.png" alt="Auto diagnostician inspecting a modern sedan with a handheld diagnostic scanner in a workshop" />

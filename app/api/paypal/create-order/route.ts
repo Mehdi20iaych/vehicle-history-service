@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const PRICE = '24.99'
+const PRICE = '9.99'
 
 function paypalBaseUrl() {
   return process.env.PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'
