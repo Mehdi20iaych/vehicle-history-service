@@ -52,12 +52,14 @@ export default function Page() {
       const response = await fetch('/api/vehicle/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ vin: normalizedVin }) })
       const result = await response.json()
       if (!response.ok || !result.valid) throw new Error(result.message || 'We could not validate that VIN.')
-      const checkout = new URL(result.checkoutUrl)
-      checkout.searchParams.set('vin', normalizedVin)
-      if (email) checkout.searchParams.set('email', email)
-      const passthrough = btoa(JSON.stringify({ vin: normalizedVin, email })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-      checkout.searchParams.set('passthrough', passthrough)
-      window.location.href = checkout.toString()
+      const paymentResponse = await fetch('/api/paypal/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vin: normalizedVin, email }),
+      })
+      const payment = await paymentResponse.json()
+      if (!paymentResponse.ok || !payment.approvalUrl) throw new Error(payment.message || 'We could not start PayPal checkout.')
+      window.location.href = payment.approvalUrl
     } catch (requestError) {
       setLoading(false)
       setStatus('')
@@ -99,7 +101,7 @@ export default function Page() {
 
       <section className="section steps-section container"><p className="eyebrow">Simple by design</p><h2>Three steps to<br /><em>know more.</em></h2><div className="steps">{steps.map((item) => { const Icon = item.icon; return <div key={item.title}><span className="step-icon" aria-hidden="true"><Icon size={23} strokeWidth={2.1} /></span><h3>{item.title}</h3><p>{item.text}</p></div> })}</div></section>
 
-      <section className="start-section" id="start"><div className="container start-layout"><div><p className="eyebrow">Start your search</p><h2>Make the next<br /><em>decision informed.</em></h2><p className="start-copy">Enter a VIN to validate it before checkout. Email is optional and only helps us route your report.</p></div><form className="vin-form" onSubmit={handleSubmit} noValidate><label htmlFor="vin">Vehicle identification number <span>Required</span></label><input id="vin" value={vin} onChange={(event) => setVin(event.target.value)} placeholder="e.g. 1HGCM82633A004352" maxLength={19} autoCapitalize="characters" /><label htmlFor="email">Email address <span>Optional</span></label><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /><button className="button button-dark form-button" disabled={loading}>{loading ? 'Validating…' : 'Validate & continue'} <span>↗</span></button>{error && <p className="form-message error" role="alert">{error}</p>}{status && <p className="form-message" role="status">{status}</p>}<p className="form-terms">By continuing, you agree to receive your report digitally. Checkout is handled securely by Gumroad. Your VIN is attached to the order so payment can be matched automatically.</p></form></div></section>
+      <section className="start-section" id="start"><div className="container start-layout"><div><p className="eyebrow">Start your search</p><h2>Make the next<br /><em>decision informed.</em></h2><p className="start-copy">Enter a VIN to validate it before checkout. Email is optional and only helps us route your report.</p></div><form className="vin-form" onSubmit={handleSubmit} noValidate><label htmlFor="vin">Vehicle identification number <span>Required</span></label><input id="vin" value={vin} onChange={(event) => setVin(event.target.value)} placeholder="e.g. 1HGCM82633A004352" maxLength={19} autoCapitalize="characters" /><label htmlFor="email">Email address <span>Optional</span></label><input id="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /><button className="button button-dark form-button" disabled={loading}>{loading ? 'Validating…' : 'Validate & continue'} <span>↗</span></button>{error && <p className="form-message error" role="alert">{error}</p>}{status && <p className="form-message" role="status">{status}</p>}<p className="form-terms">By continuing, you agree to receive your report digitally. Checkout is handled securely by PayPal. Your VIN is attached to the order so payment can be matched automatically.</p></form></div></section>
 
       <section className="faq-section container" id="faq"><div className="faq-intro"><p className="eyebrow">Good to know</p><h2>Questions,<br /><em>answered.</em></h2></div><div className="faq-list">{faqs.map(([question, answer]) => <details key={question}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}</div></section>
 
