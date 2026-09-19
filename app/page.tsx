@@ -764,7 +764,7 @@ export default function Page() {
           <div>
             <p className="eyebrow">Contact us</p>
             <h2>Need help with<br /><em>your report?</em></h2>
-            <p>Send us a message and include the email address where you would like to receive a reply.</p>
+            <p>Send us a message and include the email address where you would like to receive a reply. We aim to reply in under 1 hour.</p>
           </div>
           <form className="contact-form" onSubmit={submitContact}>
             <label htmlFor="contact-email">Email address</label>
