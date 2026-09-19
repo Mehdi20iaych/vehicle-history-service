@@ -166,6 +166,10 @@ export default function Page() {
   const [reportPrice, setReportPrice] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
   const [showStickyReport, setShowStickyReport] = useState(true);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactStatus, setContactStatus] = useState("");
+  const [contactSending, setContactSending] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -281,6 +285,33 @@ export default function Page() {
     setStatus("");
     setError(message);
   }, []);
+
+  async function submitContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setContactStatus("");
+    setContactSending(true);
+    const form = new FormData(event.currentTarget);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: contactEmail,
+          message: contactMessage,
+          website: form.get("website"),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Your message could not be sent.");
+      setContactEmail("");
+      setContactMessage("");
+      setContactStatus("Thank you. Your message has been sent.");
+    } catch (contactError) {
+      setContactStatus(contactError instanceof Error ? contactError.message : "Your message could not be sent.");
+    } finally {
+      setContactSending(false);
+    }
+  }
 
   return (
     <main className="site-shell">
@@ -725,6 +756,46 @@ export default function Page() {
               <p>{answer}</p>
             </details>
           ))}
+        </div>
+      </section>
+
+      <section className="contact-section" id="contact">
+        <div className="container contact-layout">
+          <div>
+            <p className="eyebrow">Contact us</p>
+            <h2>Need help with<br /><em>your report?</em></h2>
+            <p>Send us a message and include the email address where you would like to receive a reply.</p>
+          </div>
+          <form className="contact-form" onSubmit={submitContact}>
+            <label htmlFor="contact-email">Email address</label>
+            <input
+              id="contact-email"
+              type="email"
+              value={contactEmail}
+              onChange={(event) => setContactEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              maxLength={254}
+              required
+            />
+            <label htmlFor="contact-message">Message</label>
+            <textarea
+              id="contact-message"
+              value={contactMessage}
+              onChange={(event) => setContactMessage(event.target.value)}
+              placeholder="How can we help?"
+              minLength={10}
+              maxLength={2000}
+              rows={5}
+              required
+            />
+            <input className="contact-honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <button className="button button-dark" disabled={contactSending}>
+              {contactSending ? "Sending…" : "Send message"}
+              <ArrowUpRight className="action-icon" aria-hidden="true" />
+            </button>
+            {contactStatus && <p className="contact-status" role="status">{contactStatus}</p>}
+          </form>
         </div>
       </section>
 

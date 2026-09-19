@@ -45,8 +45,29 @@ function ensureSchema() {
       )
     `
     await sql`CREATE INDEX IF NOT EXISTS autoscope_report_quotes_expiry_idx ON autoscope_report_quotes(expires_at)`
+    await sql`
+      CREATE TABLE IF NOT EXISTS autoscope_contact_messages (
+        id BIGSERIAL PRIMARY KEY,
+        email TEXT NOT NULL,
+        message TEXT NOT NULL,
+        visitor_id TEXT,
+        country TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `
+    await sql`CREATE INDEX IF NOT EXISTS autoscope_contact_messages_created_idx ON autoscope_contact_messages(created_at DESC)`
   })()
   return schemaReady
+}
+
+export async function saveContactMessage(request: Request, email: string, message: string) {
+  if (!sql) return false
+  await ensureSchema()
+  await sql`
+    INSERT INTO autoscope_contact_messages (email, message, visitor_id, country)
+    VALUES (${email}, ${message}, ${visitorIdFromRequest(request)}, ${countryFromRequest(request)})
+  `
+  return true
 }
 
 export async function saveReportQuote(details: {
@@ -137,7 +158,7 @@ export async function analyticsSummary(days = 30, excludedCountries: string[] = 
     .map((country) => country.trim().toUpperCase())
     .filter((country) => /^[A-Z]{2,3}$/.test(country))
   const excludedList = excluded.length ? excluded : ['__NONE__']
-  const [totals, daily, countries, sources, recent, visitors, activity, allCountries] = await Promise.all([
+  const [totals, daily, countries, sources, recent, visitors, activity, allCountries, contactMessages] = await Promise.all([
     sql`SELECT
       COUNT(DISTINCT visitor_id) FILTER (WHERE event_type='page_view')::int AS visitors,
       COUNT(*) FILTER (WHERE event_type='page_view')::int AS views,
@@ -204,8 +225,11 @@ export async function analyticsSummary(days = 30, excludedCountries: string[] = 
       FROM autoscope_events
       WHERE country IS NOT NULL AND country <> '' AND country <> 'Unknown'
       GROUP BY 1 ORDER BY visitors DESC, country ASC`,
+    sql`SELECT id, email, message, country, created_at
+      FROM autoscope_contact_messages
+      ORDER BY created_at DESC LIMIT 100`,
   ])
   const row = totals[0] as any
   const abandoned = Math.max(0, Number(row.checkouts) - Number(row.purchases))
-  return { totals: { ...row, abandoned }, daily, countries, sources, recent, visitors, activity, allCountries, excludedCountries: excluded }
+  return { totals: { ...row, abandoned }, daily, countries, sources, recent, visitors, activity, allCountries, contactMessages, excludedCountries: excluded }
 }

@@ -268,6 +268,33 @@ export default async function AdminPage({
         </div>
       </section>
       <section className="admin-panel">
+        <div className="admin-panel-heading">
+          <div>
+            <h2>Contact messages</h2>
+            <p>Email addresses and messages submitted through the website.</p>
+          </div>
+          <span>{data.contactMessages.length} messages</span>
+        </div>
+        <div className="admin-table-scroll">
+          <table>
+            <thead>
+              <tr><th>Email</th><th>Message</th><th>Country</th><th>Received</th></tr>
+            </thead>
+            <tbody>
+              {data.contactMessages.map((row: any) => (
+                <tr key={row.id}>
+                  <td><a href={`mailto:${row.email}`}>{row.email}</a></td>
+                  <td className="admin-message">{row.message}</td>
+                  <td>{row.country || "Unknown"}</td>
+                  <td>{new Date(row.created_at).toLocaleString("en-US")}</td>
+                </tr>
+              ))}
+              {!data.contactMessages.length && <tr><td colSpan={4}>No contact messages yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section className="admin-panel">
         <h2>Recent checkout activity</h2>
         <table>
           <thead>
