@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { PayPalCardCheckout } from "@/components/paypal-card-checkout";
+import { PayPalCardCheckout, preloadPayPalCheckout } from "@/components/paypal-card-checkout";
 import { trackMeta } from "@/components/meta-pixel";
 
 const coverage: { icon: LucideIcon; title: string; text: string }[] = [
@@ -251,6 +251,9 @@ export default function Page() {
           ? availability.quoteId
           : null,
       );
+      if (canCheckout && typeof availability.quoteId === "string") {
+        preloadPayPalCheckout().catch(() => {});
+      }
       setStatus(
         canCheckout
           ? "Report data is available. Your exact price is shown below."
@@ -267,6 +270,12 @@ export default function Page() {
       );
     }
   }
+
+  const paymentCompleted = useCallback((_orderId: string) => {
+    setShowPaymentOptions(false);
+    setStatus("");
+    window.location.assign("/report");
+  }, []);
 
   const paymentFailed = useCallback((message: string) => {
     setStatus("");
@@ -662,6 +671,7 @@ export default function Page() {
                     email={email}
                     price={reportPrice}
                     quoteId={quoteId}
+                    onComplete={paymentCompleted}
                     onError={paymentFailed}
                   />
                 ) : (
@@ -748,7 +758,3 @@ export default function Page() {
             <ArrowUpRight className="action-icon" aria-hidden="true" />
           </a>
         </aside>
-      )}
-    </main>
-  );
-}
