@@ -28,5 +28,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { colorScheme: 'light', themeColor: '#f7f6f2', width: 'device-width', initialScale: 1 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body className="antialiased">{children}<AnalyticsTracker />{process.env.NODE_ENV === 'production' && <><Analytics /><MetaPixel /></>}</body></html>
+  return <html lang="en"><head><link rel="preconnect" href="https://www.paypal.com" /><link rel="preconnect" href="https://www.paypalobjects.com" /></head><body className="antialiased">{children}<AnalyticsTracker />{process.env.NODE_ENV === 'production' && <><Analytics /><MetaPixel /></>}</body></html>
 }
