@@ -22,6 +22,15 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## PayPal setup
+
+Copy `.env.example` to `.env.local` and add PayPal REST API credentials from the
+PayPal Developer Dashboard. Keep `PAYPAL_MODE=sandbox` while testing. Set
+`NEXT_PUBLIC_SITE_URL` to the deployed HTTPS URL in Vercel. Add the same values
+to **Vercel → Project Settings → Environment Variables**, then redeploy.
+
+Never commit `.env.local` or PayPal secrets to GitHub.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 ## Learn More
