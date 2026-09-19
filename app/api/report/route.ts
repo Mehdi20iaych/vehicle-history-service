@@ -12,5 +12,5 @@ export async function GET() {
   if (!session) return NextResponse.json({ message: 'No active report session. Open this page in the browser used for checkout. Earlier sessions cannot be recovered here; do not pay again.' }, { status: 401, headers })
   const savedQuote = session.quoteId ? await getReportQuote(session.quoteId, session.vin, 1440) : null
   const sections = savedQuote?.sections || (await availableRecords(session.vin)).sections
-  return NextResponse.json({ vin: session.vin, orderId: session.orderId, sections }, { headers })
+  return NextResponse.json({ vin: session.vin, orderId: session.orderId, price: session.price, sections }, { headers })
 }
