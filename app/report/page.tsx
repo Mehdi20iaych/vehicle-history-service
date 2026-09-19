@@ -1,15 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './report.module.css'
 import type { RecordSection } from '@/lib/vehicle-records'
+import { trackMeta } from '@/components/meta-pixel'
 
-type Report = { vin: string; orderId: string; sections: RecordSection[] }
+type Report = { vin: string; orderId: string; price?: string; sections: RecordSection[] }
 export default function ReportPage() {
   const [report, setReport] = useState<Report | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [attempt, setAttempt] = useState(0)
+  const purchaseTracked = useRef(false)
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
@@ -18,6 +20,10 @@ export default function ReportPage() {
       const result = await response.json()
       if (!response.ok) throw new Error(result.message || 'Unable to load report')
       setReport(result)
+      if (!purchaseTracked.current && result.price) {
+        purchaseTracked.current = true
+        trackMeta('Purchase', { value: Number(result.price), currency: 'USD', content_name: 'Vehicle report' })
+      }
     }).catch(error => { if (!controller.signal.aborted) setError(error.message) }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [attempt])
