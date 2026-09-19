@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { PAYPAL_CURRENCY, paypalRequest } from '@/lib/paypal'
 import { signSession, cookieOptions } from '@/lib/report-session'
-import { availableRecords, isReportPrice } from '@/lib/vehicle-records'
-import { recordEvent, visitorIdFromRequest } from '@/lib/site-analytics'
+import { isReportPrice } from '@/lib/vehicle-records'
+import { getReportQuote, recordEvent, visitorIdFromRequest } from '@/lib/site-analytics'
 
 export const runtime = 'nodejs'
 
@@ -21,12 +21,14 @@ function isEmail(value: string) {
 }
 
 export async function POST(request: Request) {
+  const startedAt = Date.now()
   try {
     if (process.env.PAYPAL_MODE !== 'live') return NextResponse.json({ message: 'Live payments are not configured yet.' }, { status: 503 })
     const body = await request.json()
     const vin = typeof body?.vin === 'string' ? body.vin.replace(/\s/g, '').toUpperCase() : ''
     const email = typeof body?.email === 'string' ? body.email.trim() : ''
     const expectedPrice = typeof body?.expectedPrice === 'string' ? body.expectedPrice : ''
+    const quoteId = typeof body?.quoteId === 'string' ? body.quoteId : ''
     const useButtons = body?.flow === 'buttons'
 
     if (!isVin(vin)) {
@@ -37,9 +39,9 @@ export async function POST(request: Request) {
     }
     if (!isReportPrice(expectedPrice)) return NextResponse.json({ message: 'Please check the VIN again to get the current report price.' }, { status: 400 })
 
-    const availability = await availableRecords(vin)
-    if (!availability.available) return NextResponse.json({ message: 'Checkout is unavailable because no usable history records were returned. You have not been charged. Please try again later.' }, { status: 409 })
-    const price = availability.quote.price
+    const quote = await getReportQuote(quoteId, vin, 30)
+    if (!quote) return NextResponse.json({ message: 'Your secure quote expired. Check the VIN again before payment.' }, { status: 409 })
+    const price = Number(quote.price).toFixed(2)
     if (price !== expectedPrice) return NextResponse.json({ message: 'Available records changed. Check the VIN again to confirm the updated price before payment.' }, { status: 409 })
     const requestOrigin = new URL(request.url).origin
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || requestOrigin).replace(/\/$/, '')
@@ -81,10 +83,11 @@ export async function POST(request: Request) {
     if (!order.id) {
       throw new Error('PayPal did not return an order ID.')
     }
-    await recordEvent(request, 'checkout_started', { visitorId: visitorIdFromRequest(request), orderId: order.id, amount: price, currency: PAYPAL_CURRENCY, metadata: { recordCount: availability.quote.recordCount, sourceCount: availability.quote.sourceCount } })
+    after(() => recordEvent(request, 'checkout_started', { visitorId: visitorIdFromRequest(request), orderId: order.id, amount: price, currency: PAYPAL_CURRENCY, metadata: { recordCount: quote.record_count, sourceCount: quote.source_count } }))
+    console.info('[paypal] order created', { orderId: order.id, durationMs: Date.now() - startedAt })
     if (useButtons) {
       const response = NextResponse.json({ orderId: order.id })
-      response.cookies.set('autoscope_checkout', signSession({ orderId: order.id, vin, price, purpose: 'checkout', expires: Date.now() + 86400000 }), cookieOptions)
+      response.cookies.set('autoscope_checkout', signSession({ orderId: order.id, vin, price, quoteId, purpose: 'checkout', expires: Date.now() + 86400000 }), cookieOptions)
       return response
     }
     if (!approvalUrl) {
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
     }
 
     const response = NextResponse.json({ orderId: order.id, approvalUrl })
-    response.cookies.set('autoscope_checkout', signSession({ orderId: order.id, vin, price, purpose: 'checkout', expires: Date.now() + 86400000 }), cookieOptions)
+    response.cookies.set('autoscope_checkout', signSession({ orderId: order.id, vin, price, quoteId, purpose: 'checkout', expires: Date.now() + 86400000 }), cookieOptions)
     return response
   } catch (error) {
     console.error('[paypal] create order failed', error)
