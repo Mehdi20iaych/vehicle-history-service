@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { PayPalCardCheckout } from "@/components/paypal-card-checkout";
+import { PayPalCardCheckout, preloadPayPalCheckout } from "@/components/paypal-card-checkout";
 import { trackMeta } from "@/components/meta-pixel";
 
 const coverage: { icon: LucideIcon; title: string; text: string }[] = [
@@ -164,6 +164,7 @@ export default function Page() {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const [recordsAvailable, setRecordsAvailable] = useState(false);
   const [reportPrice, setReportPrice] = useState<string | null>(null);
+  const [quoteId, setQuoteId] = useState<string | null>(null);
   const [showStickyReport, setShowStickyReport] = useState(true);
 
   useEffect(() => {
@@ -205,6 +206,7 @@ export default function Page() {
     }
     setRecordsAvailable(false);
     setReportPrice(null);
+    setQuoteId(null);
     setLoading(true);
     setStatus("Checking the VIN…");
     try {
@@ -244,6 +246,14 @@ export default function Page() {
           ? availability.price
           : null,
       );
+      setQuoteId(
+        canCheckout && typeof availability.quoteId === "string"
+          ? availability.quoteId
+          : null,
+      );
+      if (canCheckout && typeof availability.quoteId === "string") {
+        preloadPayPalCheckout().catch(() => {});
+      }
       setStatus(
         canCheckout
           ? "Report data is available. Your exact price is shown below."
@@ -534,6 +544,7 @@ export default function Page() {
                 setVin(event.target.value);
                 setRecordsAvailable(false);
                 setReportPrice(null);
+                setQuoteId(null);
                 setVehiclePreview(null);
                 setShowPaymentOptions(false);
               }}
@@ -654,11 +665,12 @@ export default function Page() {
                     History unavailable. Keep your free vehicle preview; no
                     payment is needed.
                   </p>
-                ) : showPaymentOptions && reportPrice ? (
+                ) : showPaymentOptions && reportPrice && quoteId ? (
                   <PayPalCardCheckout
                     vin={vin.replace(/\s/g, "").toUpperCase()}
                     email={email}
                     price={reportPrice}
+                    quoteId={quoteId}
                     onComplete={paymentCompleted}
                     onError={paymentFailed}
                   />
