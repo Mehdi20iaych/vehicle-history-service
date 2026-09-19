@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-export type ReportSession = { orderId: string; vin: string; price?: string; purpose: 'checkout' | 'report'; expires: number }
+export type ReportSession = { orderId: string; vin: string; price?: string; quoteId?: string; purpose: 'checkout' | 'report'; expires: number }
 export const cookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/', maxAge: 86400 }
 function signature(value: string) {
   const secret = process.env.PAYPAL_CLIENT_SECRET
@@ -20,7 +20,7 @@ export function readSession(token: string | undefined, purpose: ReportSession['p
     const actual = Buffer.from(mac)
     if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return null
     const session = JSON.parse(Buffer.from(value, 'base64url').toString())
-    if (session.purpose !== purpose || !Number.isFinite(session.expires) || session.expires <= Date.now() || !/^[A-HJ-NPR-Z0-9]{17}$/.test(session.vin) || typeof session.orderId !== 'string') return null
+    if (session.purpose !== purpose || !Number.isFinite(session.expires) || session.expires <= Date.now() || !/^[A-HJ-NPR-Z0-9]{17}$/.test(session.vin) || typeof session.orderId !== 'string' || (session.quoteId !== undefined && !/^[0-9a-f-]{36}$/i.test(session.quoteId))) return null
     return session
   } catch { return null }
 }
