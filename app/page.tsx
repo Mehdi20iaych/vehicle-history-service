@@ -328,6 +328,7 @@ export default function Page() {
         <div className="nav-links">
           <a href="#coverage">What&apos;s inside</a>
           <a href="#faq">FAQ</a>
+          <a href="#contact">Contact us</a>
           <a className="nav-cta" href="#start">
             Get my report <ArrowUpRight className="action-icon" aria-hidden="true" />
           </a>
