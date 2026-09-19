@@ -53,13 +53,15 @@ export async function POST(request: Request) {
         description: `Available vehicle records for VIN ${vin}`,
         amount: { currency_code: PAYPAL_CURRENCY, value: price },
       }],
-      application_context: { brand_name: 'Autoscope', user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING' },
-      ...(useButtons ? {} : {
+      ...(useButtons ? {
+        application_context: { brand_name: 'Autoscope', user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING' },
+      } : {
         payment_source: {
           paypal: {
             experience_context: {
               brand_name: 'Autoscope',
               user_action: 'PAY_NOW',
+              shipping_preference: 'NO_SHIPPING',
               return_url: `${siteUrl}/api/paypal/capture-order`,
               cancel_url: `${siteUrl}/?payment=cancelled#start`,
             },
