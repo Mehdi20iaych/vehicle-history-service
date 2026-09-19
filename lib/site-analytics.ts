@@ -32,8 +32,56 @@ function ensureSchema() {
     await sql`CREATE INDEX IF NOT EXISTS autoscope_events_order_idx ON autoscope_events(order_id)`
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS autoscope_events_funnel_unique_idx ON autoscope_events(event_type, order_id)
       WHERE order_id IS NOT NULL AND event_type IN ('checkout_started','purchase')`
+    await sql`
+      CREATE TABLE IF NOT EXISTS autoscope_report_quotes (
+        quote_id UUID PRIMARY KEY,
+        vin TEXT NOT NULL,
+        price NUMERIC(10,2) NOT NULL,
+        sections JSONB NOT NULL,
+        record_count INTEGER NOT NULL,
+        source_count INTEGER NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMPTZ NOT NULL
+      )
+    `
+    await sql`CREATE INDEX IF NOT EXISTS autoscope_report_quotes_expiry_idx ON autoscope_report_quotes(expires_at)`
   })()
   return schemaReady
+}
+
+export async function saveReportQuote(details: {
+  vin: string
+  price: string
+  sections: unknown
+  recordCount: number
+  sourceCount: number
+}) {
+  if (!sql) return null
+  await ensureSchema()
+  const quoteId = randomUUID()
+  await sql`
+    INSERT INTO autoscope_report_quotes
+      (quote_id, vin, price, sections, record_count, source_count, expires_at)
+    VALUES
+      (${quoteId}, ${details.vin}, ${Number(details.price)}, ${sql.json(details.sections as any)},
+       ${details.recordCount}, ${details.sourceCount}, NOW() + INTERVAL '24 hours')
+  `
+  return quoteId
+}
+
+export async function getReportQuote(quoteId: string, vin: string, maxAgeMinutes: number) {
+  if (!sql || !/^[0-9a-f-]{36}$/i.test(quoteId)) return null
+  await ensureSchema()
+  const rows = await sql`
+    SELECT quote_id, vin, price::text, sections, record_count, source_count, created_at
+    FROM autoscope_report_quotes
+    WHERE quote_id = ${quoteId}
+      AND vin = ${vin}
+      AND expires_at > NOW()
+      AND created_at >= NOW() - (${Math.max(1, Math.min(1440, maxAgeMinutes))} * INTERVAL '1 minute')
+    LIMIT 1
+  `
+  return rows[0] || null
 }
 
 export function visitorIdFromRequest(request: Request) {
