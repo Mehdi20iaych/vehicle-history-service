@@ -12,8 +12,8 @@ export async function GET() {
     return NextResponse.json({ message: 'PayPal is not configured.' }, { status: 503 })
   }
 
-  return NextResponse.json({
-    clientId,
-    currency: PAYPAL_CURRENCY,
-  })
+  return NextResponse.json(
+    { clientId, currency: PAYPAL_CURRENCY },
+    { headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400' } },
+  )
 }
