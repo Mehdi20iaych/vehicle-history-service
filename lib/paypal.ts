@@ -1,5 +1,6 @@
 export const PAYPAL_PRICE = '9.99'
 export const PAYPAL_CURRENCY = 'USD'
+let cachedAccessToken: { value: string; expiresAt: number } | null = null
 
 export function paypalBaseUrl() {
   return process.env.PAYPAL_MODE === 'live'
@@ -8,6 +9,7 @@ export function paypalBaseUrl() {
 }
 
 async function getAccessToken() {
+  if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 60_000) return cachedAccessToken.value
   const clientId = process.env.PAYPAL_CLIENT_ID
   const clientSecret = process.env.PAYPAL_CLIENT_SECRET
 
@@ -29,8 +31,9 @@ async function getAccessToken() {
   if (!response.ok || typeof data?.access_token !== 'string') {
     throw new Error('PayPal rejected the configured credentials.')
   }
-
-  return data.access_token
+  const expiresIn = Number(data.expires_in) || 300
+  cachedAccessToken = { value: data.access_token, expiresAt: Date.now() + expiresIn * 1000 }
+  return cachedAccessToken.value
 }
 
 export async function paypalRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
