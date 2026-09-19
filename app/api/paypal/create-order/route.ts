@@ -1,74 +1,104 @@
+import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
+import { PAYPAL_CURRENCY, paypalRequest } from '@/lib/paypal'
+import { signSession, cookieOptions } from '@/lib/report-session'
+import { availableRecords, isReportPrice } from '@/lib/vehicle-records'
+import { recordEvent, visitorIdFromRequest } from '@/lib/site-analytics'
 
-const PRICE = '9.99'
+export const runtime = 'nodejs'
 
-function paypalBaseUrl() {
-  return process.env.PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'
+type PayPalOrder = {
+  id?: string
+  links?: Array<{ href?: string; rel?: string }>
 }
 
 function isVin(value: string) {
   return /^[A-HJ-NPR-Z0-9]{17}$/.test(value)
 }
 
-async function getAccessToken() {
-  const clientId = process.env.PAYPAL_CLIENT_ID
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET
-  if (!clientId || !clientSecret) throw new Error('PayPal is not configured.')
-
-  const response = await fetch(`${paypalBaseUrl()}/v1/oauth2/token`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
-    cache: 'no-store',
-  })
-  const data = await response.json().catch(() => null)
-  if (!response.ok || typeof data?.access_token !== 'string') throw new Error('Unable to authenticate with PayPal.')
-  return data.access_token
+function isEmail(value: string) {
+  return /^\S+@\S+\.\S+$/.test(value)
 }
 
 export async function POST(request: Request) {
   try {
+    if (process.env.PAYPAL_MODE !== 'live') return NextResponse.json({ message: 'Live payments are not configured yet.' }, { status: 503 })
     const body = await request.json()
     const vin = typeof body?.vin === 'string' ? body.vin.replace(/\s/g, '').toUpperCase() : ''
     const email = typeof body?.email === 'string' ? body.email.trim() : ''
-    if (!isVin(vin)) return NextResponse.json({ message: 'Please enter a valid VIN.' }, { status: 400 })
+    const expectedPrice = typeof body?.expectedPrice === 'string' ? body.expectedPrice : ''
+    const useButtons = body?.flow === 'buttons'
 
-    const accessToken = await getAccessToken()
-    const origin = new URL(request.url).origin
-    const response = await fetch(`${paypalBaseUrl()}/v2/checkout/orders`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify({
-        intent: 'CAPTURE',
-        purchase_units: [{
-          reference_id: vin,
-          custom_id: JSON.stringify({ vin, email }),
-          description: `Vehicle history report for VIN ${vin}`,
-          amount: { currency_code: 'USD', value: PRICE },
-        }],
-        application_context: {
-          brand_name: 'Autoscope',
-          user_action: 'PAY_NOW',
-          return_url: `${origin}/api/paypal/capture-order`,
-          cancel_url: `${origin}/?payment=cancelled#start`,
+    if (!isVin(vin)) {
+      return NextResponse.json({ message: 'Please enter a valid VIN.' }, { status: 400 })
+    }
+    if (email && !isEmail(email)) {
+      return NextResponse.json({ message: 'Please enter a valid email address.' }, { status: 400 })
+    }
+    if (!isReportPrice(expectedPrice)) return NextResponse.json({ message: 'Please check the VIN again to get the current report price.' }, { status: 400 })
+
+    const availability = await availableRecords(vin)
+    if (!availability.available) return NextResponse.json({ message: 'Checkout is unavailable because no usable history records were returned. You have not been charged. Please try again later.' }, { status: 409 })
+    const price = availability.quote.price
+    if (price !== expectedPrice) return NextResponse.json({ message: 'Available records changed. Check the VIN again to confirm the updated price before payment.' }, { status: 409 })
+    const requestOrigin = new URL(request.url).origin
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || requestOrigin).replace(/\/$/, '')
+    const orderPayload = {
+      intent: 'CAPTURE',
+      purchase_units: [{
+        reference_id: vin,
+        custom_id: JSON.stringify({ vin, email }),
+        description: `Available vehicle records for VIN ${vin}`,
+        amount: { currency_code: PAYPAL_CURRENCY, value: price },
+      }],
+      application_context: { brand_name: 'Autoscope', user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING' },
+      ...(useButtons ? {} : {
+        payment_source: {
+          paypal: {
+            experience_context: {
+              brand_name: 'Autoscope',
+              user_action: 'PAY_NOW',
+              return_url: `${siteUrl}/api/paypal/capture-order`,
+              cancel_url: `${siteUrl}/?payment=cancelled#start`,
+            },
+          },
         },
       }),
-      cache: 'no-store',
+    }
+    const order = await paypalRequest<PayPalOrder>('/v2/checkout/orders', {
+      method: 'POST',
+      headers: {
+        Prefer: 'return=representation',
+        'PayPal-Request-Id': randomUUID(),
+      },
+      body: JSON.stringify(orderPayload),
     })
-    const data = await response.json().catch(() => null)
-    const approvalUrl = data?.links?.find((link: { rel?: string }) => link.rel === 'approve')?.href
-    if (!response.ok || !approvalUrl) return NextResponse.json({ message: 'PayPal could not create the checkout.' }, { status: 502 })
-    return NextResponse.json({ orderId: data.id, approvalUrl })
+
+    const approvalUrl = order.links?.find(
+      (link) => link.rel === 'payer-action' || link.rel === 'approve',
+    )?.href
+
+    if (!order.id) {
+      throw new Error('PayPal did not return an order ID.')
+    }
+    await recordEvent(request, 'checkout_started', { visitorId: visitorIdFromRequest(request), orderId: order.id, amount: price, currency: PAYPAL_CURRENCY, metadata: { recordCount: availability.quote.recordCount, sourceCount: availability.quote.sourceCount } })
+    if (useButtons) {
+      const response = NextResponse.json({ orderId: order.id })
+      response.cookies.set('autoscope_checkout', signSession({ orderId: order.id, vin, price, purpose: 'checkout', expires: Date.now() + 86400000 }), cookieOptions)
+      return response
+    }
+    if (!approvalUrl) {
+      throw new Error('PayPal did not return a checkout link.')
+    }
+
+    const response = NextResponse.json({ orderId: order.id, approvalUrl })
+    response.cookies.set('autoscope_checkout', signSession({ orderId: order.id, vin, price, purpose: 'checkout', expires: Date.now() + 86400000 }), cookieOptions)
+    return response
   } catch (error) {
-    return NextResponse.json({ message: error instanceof Error ? error.message : 'PayPal checkout is unavailable.' }, { status: 503 })
+    console.error('[paypal] create order failed', error)
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : 'PayPal checkout is unavailable.' },
+      { status: 503 },
+    )
   }
 }
-
-export { getAccessToken, paypalBaseUrl }
