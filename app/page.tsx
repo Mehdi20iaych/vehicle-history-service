@@ -758,3 +758,7 @@ export default function Page() {
             <ArrowUpRight className="action-icon" aria-hidden="true" />
           </a>
         </aside>
+      )}
+    </main>
+  );
+}
