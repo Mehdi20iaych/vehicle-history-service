@@ -433,8 +433,7 @@ export default function Page() {
         <div className="section-heading">
           <p className="eyebrow">What you&apos;ll find</p>
           <h2>
-            The parts buyers<br />
-            <em>usually ask about.</em>
+            The checks buyers <em>usually ask about.</em>
           </h2>
           <p>
             Not every VIN has records. When it does, the report is organized
