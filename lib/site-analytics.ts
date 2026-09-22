@@ -1,7 +1,7 @@
 import { createHash, randomUUID, timingSafeEqual } from 'node:crypto'
 import postgres from 'postgres'
 
-export type AnalyticsEvent = 'page_view' | 'time_spent' | 'preview_available' | 'preview_unavailable' | 'checkout_started' | 'purchase'
+export type AnalyticsEvent = 'page_view' | 'time_spent' | 'preview_available' | 'preview_unavailable' | 'checkout_started' | 'purchase' | 'coupon_redeemed'
 
 const databaseUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL
 const sql = databaseUrl ? postgres(databaseUrl, { ssl: 'require', max: 3, idle_timeout: 20 }) : null
@@ -56,8 +56,37 @@ function ensureSchema() {
       )
     `
     await sql`CREATE INDEX IF NOT EXISTS autoscope_contact_messages_created_idx ON autoscope_contact_messages(created_at DESC)`
+    await sql`
+      CREATE TABLE IF NOT EXISTS autoscope_coupon_redemptions (
+        coupon_hash TEXT PRIMARY KEY,
+        vin TEXT NOT NULL,
+        quote_id UUID NOT NULL,
+        visitor_id TEXT,
+        country TEXT,
+        redeemed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `
+    await sql`CREATE INDEX IF NOT EXISTS autoscope_coupon_redemptions_redeemed_idx ON autoscope_coupon_redemptions(redeemed_at DESC)`
   })()
   return schemaReady
+}
+
+export async function redeemCouponOnce(request: Request, details: {
+  couponHash: string
+  vin: string
+  quoteId: string
+}) {
+  if (!sql) throw new Error('Coupons are not configured yet.')
+  await ensureSchema()
+  const rows = await sql`
+    INSERT INTO autoscope_coupon_redemptions
+      (coupon_hash, vin, quote_id, visitor_id, country)
+    VALUES
+      (${details.couponHash}, ${details.vin}, ${details.quoteId}, ${visitorIdFromRequest(request)}, ${countryFromRequest(request)})
+    ON CONFLICT (coupon_hash) DO NOTHING
+    RETURNING coupon_hash
+  `
+  return rows.length === 1
 }
 
 export async function saveContactMessage(request: Request, email: string, message: string) {

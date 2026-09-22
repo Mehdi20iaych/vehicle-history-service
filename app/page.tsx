@@ -165,6 +165,9 @@ export default function Page() {
   const [recordsAvailable, setRecordsAvailable] = useState(false);
   const [reportPrice, setReportPrice] = useState<string | null>(null);
   const [quoteId, setQuoteId] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState("");
+  const [couponStatus, setCouponStatus] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
   const [showStickyReport, setShowStickyReport] = useState(true);
   const [contactEmail, setContactEmail] = useState("");
   const [contactMessage, setContactMessage] = useState("");
@@ -285,6 +288,45 @@ export default function Page() {
     setStatus("");
     setError(message);
   }, []);
+
+  async function applyCoupon() {
+    setCouponStatus("");
+    setError("");
+    if (!recordsAvailable || !quoteId) {
+      setCouponStatus("Check a VIN with available report data before using a coupon.");
+      return;
+    }
+    if (!coupon.trim()) {
+      setCouponStatus("Enter a coupon code.");
+      return;
+    }
+    setCouponLoading(true);
+    try {
+      const response = await fetch("/api/coupon/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vin: vin.replace(/\s/g, "").toUpperCase(),
+          quoteId,
+          coupon,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Coupon could not be applied.");
+      }
+      setCouponStatus("Coupon accepted. Opening your free report...");
+      window.location.assign(result.reportUrl || "/report");
+    } catch (couponError) {
+      setCouponStatus(
+        couponError instanceof Error
+          ? couponError.message
+          : "Coupon could not be applied.",
+      );
+    } finally {
+      setCouponLoading(false);
+    }
+  }
 
   async function submitContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -698,14 +740,47 @@ export default function Page() {
                     payment is needed.
                   </p>
                 ) : showPaymentOptions && reportPrice && quoteId ? (
-                  <PayPalCardCheckout
-                    vin={vin.replace(/\s/g, "").toUpperCase()}
-                    email={email}
-                    price={reportPrice}
-                    quoteId={quoteId}
-                    onComplete={paymentCompleted}
-                    onError={paymentFailed}
-                  />
+                  <>
+                    <div className="coupon-box">
+                      <label htmlFor="coupon-code">
+                        Coupon code <span>Optional</span>
+                      </label>
+                      <div className="coupon-row">
+                        <input
+                          id="coupon-code"
+                          value={coupon}
+                          onChange={(event) => {
+                            setCoupon(event.target.value.toUpperCase());
+                            setCouponStatus("");
+                          }}
+                          placeholder="AUTO-FREE-XXXXXX"
+                          autoCapitalize="characters"
+                          disabled={couponLoading}
+                        />
+                        <button
+                          type="button"
+                          className="button button-dark"
+                          onClick={applyCoupon}
+                          disabled={couponLoading}
+                        >
+                          {couponLoading ? "Applying..." : "Apply"}
+                        </button>
+                      </div>
+                      {couponStatus && (
+                        <p className="form-message" role="status">
+                          {couponStatus}
+                        </p>
+                      )}
+                    </div>
+                    <PayPalCardCheckout
+                      vin={vin.replace(/\s/g, "").toUpperCase()}
+                      email={email}
+                      price={reportPrice}
+                      quoteId={quoteId}
+                      onComplete={paymentCompleted}
+                      onError={paymentFailed}
+                    />
+                  </>
                 ) : (
                   <button
                     type="button"
@@ -724,8 +799,9 @@ export default function Page() {
                   </button>
                 )}
                 <p className="unlock-note">
-                  No shipping information is requested. PayPal may request
-                  billing details required to approve a card.
+                  Have a coupon? Tap Pay securely, enter the coupon code, and
+                  apply it for 100% off. No shipping information is requested.
+                  PayPal may request billing details required to approve a card.
                 </p>
               </div>
             )}
