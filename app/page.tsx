@@ -19,23 +19,23 @@ import { trackMeta } from "@/components/meta-pixel";
 const coverage: { icon: LucideIcon; title: string; text: string }[] = [
   {
     icon: FileText,
-    title: "Title & ownership",
-    text: "Available title, brand, ownership, lien, and theft records for the VIN.",
+    title: "Title notes",
+    text: "We group title brands, liens, theft notes, and ownership entries when the sources return them.",
   },
   {
     icon: AlertTriangle,
-    title: "Accident signals",
-    text: "Available junk, salvage, insurance, and damage-related history records.",
+    title: "Damage clues",
+    text: "Salvage, junk, insurance, auction, and damage-related entries are separated so they are easier to question.",
   },
   {
     icon: Gauge,
-    title: "Mileage timeline",
-    text: "Available odometer and history entries organized for easier review.",
+    title: "Mileage trail",
+    text: "Odometer readings are shown by date when available, which helps you spot jumps or missing periods.",
   },
   {
     icon: Wrench,
-    title: "Value & recalls",
-    text: "Available market value estimates, equipment details, and safety recalls.",
+    title: "Useful extras",
+    text: "Recalls, equipment, sale listings, and value estimates stay in the report instead of being scattered around.",
   },
 ];
 
@@ -47,27 +47,27 @@ const steps = [
   },
   {
     icon: ClipboardCheck,
-    title: "See your free preview",
-    text: "Confirm the vehicle year, make, and model before deciding to buy.",
+    title: "Check the match",
+    text: "Make sure the returned year, make, model, and trim look like the car in front of you.",
   },
   {
     icon: MailCheck,
     title: "Open your report",
-    text: "After checkout, your available-records report opens in this browser. No email delivery.",
+    text: "After checkout, the report opens in this browser. Keep the tab open or print a copy.",
   },
 ];
 
 const sampleInsights: { icon: LucideIcon; label: string; value: string; note: string }[] = [
-  { icon: FileText, label: "Title history", value: "Records organized", note: "Review available title and ownership entries" },
-  { icon: AlertTriangle, label: "Damage signals", value: "Easy to identify", note: "See available salvage and damage-related signals" },
-  { icon: Gauge, label: "Mileage timeline", value: "Readings by date", note: "Compare available odometer entries over time" },
-  { icon: ClipboardCheck, label: "Sales & auctions", value: "Listings together", note: "Review available sale and auction history" },
+  { icon: FileText, label: "Title history", value: "Grouped by source", note: "Title and ownership entries stay readable" },
+  { icon: AlertTriangle, label: "Damage signals", value: "Flagged clearly", note: "Damage-related notes are not hidden in paragraphs" },
+  { icon: Gauge, label: "Mileage timeline", value: "Dates included", note: "Compare available readings over time" },
+  { icon: ClipboardCheck, label: "Sales & auctions", value: "Past listings", note: "Useful when a seller story feels incomplete" },
 ];
 
 const faqs = [
   [
     "Where is my report after checkout?",
-    "After a successful payment, your report opens automatically. Use Open my report in the same browser for 24 hours. If a provider fails, retry the records without paying again.",
+    "After a successful payment or coupon, the report opens automatically in the same browser. Access lasts 24 hours, so save or print it if you need a copy.",
   ],
   [
     "Can I test before purchasing?",
@@ -75,7 +75,7 @@ const faqs = [
   ],
   [
     "How does it work?",
-    "Enter your 17-character VIN and review the free vehicle preview. We check record availability and show the exact report price before checkout. If records disappear before PayPal captures payment, the transaction is stopped.",
+    "Enter the 17-character VIN, check the free vehicle match, then unlock the report only if useful records are available. The price is shown before checkout.",
   ],
   [
     "How much does the report cost?",
@@ -379,16 +379,16 @@ export default function Page() {
 
       <section className="hero container" id="top">
         <div className="hero-copy">
-          <p className="trial-badge">FREE VIN CHECK PREVIEW · NO CARD REQUIRED</p>
+          <p className="trial-badge">Free VIN preview first. Pay only if records are found.</p>
           <h1>
-            Check the vehicle
+            Run the VIN
             <br />
-            <em>before purchasing.</em>
+            <em>before you meet.</em>
           </h1>
           <p className="hero-lede">
-            Start with a free VIN check to preview the vehicle&apos;s year, make,
-            and model. Then see the exact price for the vehicle history records
-            available for that VIN.
+            Autoscope is a small VIN report checkout for used-car buyers. Start
+            with the free vehicle match, then unlock the available records only
+            if the sources return enough useful history.
           </p>
           <div className="hero-actions">
             <a className="button button-dark" href="#start">
@@ -399,12 +399,12 @@ export default function Page() {
             </a>
           </div>
           <p className="microcopy">
-            No payment to preview. No obligation to purchase.
+            No card for the preview. No charge when history is unavailable.
           </p>
           <ol className="hero-journey">
             <li>Enter VIN</li>
-            <li>Preview free</li>
-            <li>Choose to unlock</li>
+            <li>Check the match</li>
+            <li>Unlock if useful</li>
           </ol>
         </div>
         <div className="hero-art">
@@ -415,17 +415,17 @@ export default function Page() {
           <div className="hero-art-overlay" />
           <div className="art-label">
             <strong>VIN REPORT</strong>
-            <span>Clearer decisions start here.</span>
+            <span>For the questions you ask before buying.</span>
           </div>
         </div>
       </section>
 
       <section className="trust-strip">
         <div className="container trust-inner">
-          <span>Built for the moments that matter</span>
-          <span>01 / Independent</span>
-          <span>02 / Transparent</span>
-          <span>03 / Buyer-first</span>
+          <span>Made for quick checks before a viewing</span>
+          <span>No card for preview</span>
+          <span>Price shown before checkout</span>
+          <span>24-hour report access</span>
         </div>
       </section>
 
@@ -433,12 +433,12 @@ export default function Page() {
         <div className="section-heading">
           <p className="eyebrow">What you&apos;ll find</p>
           <h2>
-            More than a<br />
-            <em>clean title.</em>
+            The parts buyers<br />
+            <em>usually ask about.</em>
           </h2>
           <p>
-            One report, organized around the details that can change a buying
-            decision.
+            Not every VIN has records. When it does, the report is organized
+            around the checks that matter in a used-car conversation.
           </p>
         </div>
         <div className="coverage-grid">
@@ -469,14 +469,14 @@ export default function Page() {
           <div className="sample-copy">
             <p className="eyebrow eyebrow-light">Report preview</p>
             <h2>
-              See what matters.
+              A report you can skim
               <br />
-              <em>Before you buy.</em>
+              <em>while talking to a seller.</em>
             </h2>
             <p>
-              Your report turns available vehicle records into a clear,
-              easy-to-scan history so you can spot the details worth asking
-              about before making a decision.
+              The report is not dressed up as a score or magic verdict. It is a
+              practical list of available records, source by source, so you know
+              what to ask next.
             </p>
             <div className="sample-price-note">
               <strong>$6.99–$9.99</strong>
@@ -490,9 +490,9 @@ export default function Page() {
             <div className="sample-report-head">
               <div>
                 <span>AUTOSCOPE REPORT</span>
-                <strong>2019 Honda CR-V EX-L</strong>
+                <strong>2019 Honda CR-V</strong>
               </div>
-              <span className="sample-badge">EXAMPLE REPORT</span>
+              <span className="sample-badge">SAMPLE</span>
             </div>
             <div className="sample-vehicle-meta">
               <span><b>VIN</b> 2HKRW2H8XKH••••••</span>
@@ -511,18 +511,18 @@ export default function Page() {
               })}
             </div>
             <div className="sample-report-footer">
-              <span>Clear categories</span><span>Source details</span><span>Downloadable PDF</span>
+              <span>Dates</span><span>Sources</span><span>Seller questions</span>
             </div>
           </div>
         </div>
       </section>
 
       <section className="section steps-section container">
-        <p className="eyebrow">Simple by design</p>
+        <p className="eyebrow">How it actually goes</p>
         <h2>
-          Three steps to
+          No account.
           <br />
-          <em>know more.</em>
+          <em>No long form.</em>
         </h2>
         <div className="steps">
           {steps.map((item) => {
@@ -549,16 +549,17 @@ export default function Page() {
           <div className="seo-copy">
             <p>
               A vehicle identification number is a unique 17-character code.
-              Autoscope uses it to identify the vehicle and check which records
-              are available before you pay. The free preview can confirm the
-              year, make, model, and trim when the provider returns them.
+              Autoscope uses it to identify the vehicle and check whether useful
+              history records are available before you pay. The free preview can
+              confirm the year, make, model, and trim when the provider returns
+              them.
             </p>
             <p>
               An unlocked report may include available title and salvage
               signals, odometer entries, recalls, market value, specifications,
               and sale or auction records. Coverage differs by vehicle and data
-              source, so every preview shows availability and the exact price
-              before checkout.
+              source, so the page shows availability and the exact price before
+              checkout.
             </p>
             <a className="text-link" href="#start">Run a free VIN preview</a>
           </div>
@@ -568,17 +569,17 @@ export default function Page() {
       <section className="start-section" id="start">
         <div className="container start-layout">
           <div>
-            <p className="eyebrow">Try it free first</p>
+            <p className="eyebrow">Start here</p>
             <h2>
-              See the vehicle.
+              Check the VIN.
               <br />
               <em>Then decide.</em>
             </h2>
             <p className="start-copy">
-              Enter a VIN and we&apos;ll show the year, make, and model for
-              free. You only pay if you want to unlock the available-records
-              report. Reports cost between $6.99 and $9.99 depending on the
-              amount of data available for that vehicle.
+              Enter a VIN and we&apos;ll show the year, make, and model for free.
+              If useful records are available, you will see the exact price
+              before PayPal or card checkout. Coupons can unlock the report
+              without payment.
             </p>
           </div>
           <form className="vin-form" onSubmit={handleSubmit} noValidate>
@@ -663,250 +664,4 @@ export default function Page() {
                     vehiclePreview.model,
                   ]
                     .filter(Boolean)
-                    .join(" ") || "Vehicle identified"}
-                </h3>
-                {vehiclePreview.trim && (
-                  <p className="preview-trim">{vehiclePreview.trim}</p>
-                )}
-                <p className="preview-vin">
-                  VIN: {vin.replace(/\s/g, "").toUpperCase()}
-                </p>
-                <div className="report-teaser">
-                  <p className="teaser-heading">
-                    What could change your buying decision?
-                  </p>
-                  {[
-                    {
-                      title: "Accident & damage history",
-                      text: "What should you know before buying?",
-                    },
-                    {
-                      title: "Auction & sale history",
-                      text: "Could past listings tell a different story?",
-                    },
-                    {
-                      title: "Title & mileage records",
-                      text: "Does the vehicle’s history match its story?",
-                    },
-                  ].map((item) => (
-                    <div className="teaser-row" key={item.title}>
-                      <div>
-                        <strong>{item.title}</strong>
-                        <p>{item.text}</p>
-                      </div>
-                      <span className="teaser-lock" aria-label="Locked section">
-                        🔒
-                      </span>
-                      <div className="teaser-skeleton" aria-hidden="true">
-                        <i />
-                        <i />
-                        <i />
-                      </div>
-                    </div>
-                  ))}
-                  <p className="teaser-disclosure">
-                    Illustrative locked sections — not confirmed findings for
-                    this VIN. Records and coverage vary.
-                  </p>
-                </div>
-                <div className="preview-lock">
-                  <span>
-                    {loading
-                      ? "Checking report data"
-                      : reportPrice
-                        ? "Your report price"
-                        : "Report availability"}
-                  </span>
-                  <strong>
-                    {loading
-                      ? "Please wait…"
-                      : reportPrice
-                        ? `$${reportPrice}`
-                        : "Unavailable"}
-                  </strong>
-                </div>
-                {loading ? (
-                  <button
-                    type="button"
-                    className="button button-dark form-button"
-                    disabled
-                    aria-label="Pay button will be enabled when the report check finishes"
-                  >
-                    Pay <CreditCard className="action-icon" aria-hidden="true" />
-                  </button>
-                ) : !recordsAvailable ? (
-                  <p className="form-message">
-                    History unavailable. Keep your free vehicle preview; no
-                    payment is needed.
-                  </p>
-                ) : showPaymentOptions && reportPrice && quoteId ? (
-                  <>
-                    <div className="coupon-box">
-                      <label htmlFor="coupon-code">
-                        Coupon code <span>Optional</span>
-                      </label>
-                      <div className="coupon-row">
-                        <input
-                          id="coupon-code"
-                          value={coupon}
-                          onChange={(event) => {
-                            setCoupon(event.target.value.toUpperCase());
-                            setCouponStatus("");
-                          }}
-                          placeholder="AUTO-FREE-XXXXXX"
-                          autoCapitalize="characters"
-                          disabled={couponLoading}
-                        />
-                        <button
-                          type="button"
-                          className="button button-dark"
-                          onClick={applyCoupon}
-                          disabled={couponLoading}
-                        >
-                          {couponLoading ? "Applying..." : "Apply"}
-                        </button>
-                      </div>
-                      {couponStatus && (
-                        <p className="form-message" role="status">
-                          {couponStatus}
-                        </p>
-                      )}
-                    </div>
-                    <PayPalCardCheckout
-                      vin={vin.replace(/\s/g, "").toUpperCase()}
-                      email={email}
-                      price={reportPrice}
-                      quoteId={quoteId}
-                      onComplete={paymentCompleted}
-                      onError={paymentFailed}
-                    />
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    className="button button-dark form-button"
-                    onClick={() => {
-                      trackMeta("InitiateCheckout", {
-                        value: Number(reportPrice),
-                        currency: "USD",
-                        content_name: "Vehicle report",
-                      });
-                      setShowPaymentOptions(true);
-                    }}
-                    disabled={loading}
-                  >
-                    Pay securely <CreditCard className="action-icon" aria-hidden="true" />
-                  </button>
-                )}
-                <p className="unlock-note">
-                  Have a coupon? Tap Pay securely, enter the coupon code, and
-                  apply it for 100% off. No shipping information is requested.
-                  PayPal may request billing details required to approve a card.
-                </p>
-              </div>
-            )}
-            <p className="form-terms">
-              The free preview confirms the vehicle. The exact price is
-              displayed before checkout and verified again before payment.
-              Checkout is handled securely by PayPal.
-            </p>
-          </form>
-        </div>
-      </section>
-
-      <section className="faq-section container" id="faq">
-        <div className="faq-intro">
-          <p className="eyebrow">Good to know</p>
-          <h2>
-            Questions,
-            <br />
-            <em>answered.</em>
-          </h2>
-        </div>
-        <div className="faq-list">
-          {faqs.map(([question, answer]) => (
-            <details key={question}>
-              <summary>
-                {question}
-                <span>+</span>
-              </summary>
-              <p>{answer}</p>
-            </details>
-          ))}
-        </div>
-      </section>
-
-      <section className="contact-section" id="contact">
-        <div className="container contact-layout">
-          <div>
-            <p className="eyebrow">Contact us</p>
-            <h2>Need help with<br /><em>your report?</em></h2>
-            <p>Send us a message and include the email address where you would like to receive a reply. We aim to reply in under 1 hour.</p>
-          </div>
-          <form className="contact-form" onSubmit={submitContact}>
-            <label htmlFor="contact-email">Email address</label>
-            <input
-              id="contact-email"
-              type="email"
-              value={contactEmail}
-              onChange={(event) => setContactEmail(event.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              maxLength={254}
-              required
-            />
-            <label htmlFor="contact-message">Message</label>
-            <textarea
-              id="contact-message"
-              value={contactMessage}
-              onChange={(event) => setContactMessage(event.target.value)}
-              placeholder="How can we help?"
-              minLength={10}
-              maxLength={2000}
-              rows={5}
-              required
-            />
-            <input className="contact-honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
-            <button className="button button-dark" disabled={contactSending}>
-              {contactSending ? "Sending…" : "Send message"}
-              <ArrowUpRight className="action-icon" aria-hidden="true" />
-            </button>
-            {contactStatus && <p className="contact-status" role="status">{contactStatus}</p>}
-          </form>
-        </div>
-      </section>
-
-      <footer className="footer">
-        <div className="container footer-inner">
-          <a className="wordmark" href="#top">
-            AUTOSCOPE<span>.</span>
-          </a>
-          <p>Vehicle history, made clearer.</p>
-          <p>
-            © 2026 Autoscope. Information is provided as available and is not a
-            guarantee of vehicle condition.
-          </p>
-        </div>
-      </footer>
-      {showStickyReport && (
-        <aside
-          className="sticky-report"
-          aria-label="Free vehicle preview shortcut"
-        >
-          <div>
-            <strong>Test before purchasing</strong>
-            <span>Free preview · Exact price after VIN check</span>
-          </div>
-          <a
-            className="button button-dark"
-            href="#start"
-            onClick={() => setShowStickyReport(false)}
-          >
-            Get my report
-            <ArrowUpRight className="action-icon" aria-hidden="true" />
-          </a>
-        </aside>
-      )}
-    </main>
-  );
-}
+                
