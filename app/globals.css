@@ -63,3 +63,23 @@ a { color: inherit; text-decoration: none; }
   .sticky-report{bottom:max(8px,env(safe-area-inset-bottom));width:calc(100% - 16px);padding:8px 8px 8px 11px;border-width:1px;box-shadow:0 5px 18px #0003}.sticky-report strong{font-size:11px}.sticky-report div>span{max-width:150px;margin-top:2px;font-size:9px;line-height:1.25}.sticky-report .button{min-height:42px;padding:10px 12px;font-size:11px}.sticky-report .action-icon{display:none}
 }
 @media (max-width:370px){.container{width:calc(100% - 22px)}.hero h1{font-size:39px}.nav-cta{padding-inline:10px}.sample-badge{display:none}.sticky-report div>span{display:none}}
+
+/* Keep the report coverage section compact, balanced, and easy to scan. */
+@media (min-width:701px) {
+  #coverage{padding-block:92px 96px}
+  #coverage .section-heading{grid-template-columns:170px minmax(0,1.45fr) minmax(240px,.75fr);align-items:start;gap:42px;margin-bottom:42px}
+  #coverage .section-heading .eyebrow{padding-top:10px}
+  #coverage .section-heading h2{max-width:600px;font-size:54px;line-height:.98;letter-spacing:-.05em}
+  #coverage .section-heading>p:last-child{max-width:300px;padding-top:8px;font-size:14px;line-height:1.65}
+  #coverage .coverage-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:stretch}
+  #coverage .coverage-card,#coverage .coverage-card:nth-child(2),#coverage .coverage-card:nth-child(3),#coverage .coverage-card:nth-child(4){display:flex;min-height:230px;margin-top:0;padding:20px 18px 19px;flex-direction:column;box-shadow:3px 4px 0 var(--ink)}
+  #coverage .coverage-card h3{margin:26px 0 9px;font-size:18px;letter-spacing:-.035em}
+  #coverage .coverage-card p{max-width:none;font-size:11px;line-height:1.55}
+  #coverage .card-icon{width:42px;height:42px}
+  #coverage .disclaimer{margin-top:24px}
+}
+
+@media (max-width:700px) {
+  #coverage .section-heading h2{max-width:330px}
+  #coverage .section-heading h2 em{display:inline}
+}
