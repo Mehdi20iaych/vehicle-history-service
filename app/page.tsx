@@ -664,4 +664,249 @@ export default function Page() {
                     vehiclePreview.model,
                   ]
                     .filter(Boolean)
-                
+                    .join(" ") || "Vehicle identified"}
+                </h3>
+                {vehiclePreview.trim && (
+                  <p className="preview-trim">{vehiclePreview.trim}</p>
+                )}
+                <p className="preview-vin">
+                  VIN: {vin.replace(/\s/g, "").toUpperCase()}
+                </p>
+                <div className="report-teaser">
+                  <p className="teaser-heading">
+                    What could change your buying decision?
+                  </p>
+                  {[
+                    {
+                      title: "Accident & damage history",
+                      text: "Check whether the sources mention damage or salvage.",
+                    },
+                    {
+                      title: "Auction & sale history",
+                      text: "Compare old sale notes with the current listing.",
+                    },
+                    {
+                      title: "Title & mileage records",
+                      text: "Look for title brands and odometer entries by date.",
+                    },
+                  ].map((item) => (
+                    <div className="teaser-row" key={item.title}>
+                      <div>
+                        <strong>{item.title}</strong>
+                        <p>{item.text}</p>
+                      </div>
+                      <span className="teaser-lock" aria-label="Locked section">
+                        Locked
+                      </span>
+                      <div className="teaser-skeleton" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                      </div>
+                    </div>
+                  ))}
+                  <p className="teaser-disclosure">
+                    Illustrative locked sections — not confirmed findings for
+                    this VIN. Records and coverage vary.
+                  </p>
+                </div>
+                <div className="preview-lock">
+                  <span>
+                    {loading
+                      ? "Checking report data"
+                      : reportPrice
+                        ? "Your report price"
+                        : "Report availability"}
+                  </span>
+                  <strong>
+                    {loading
+                      ? "Please wait…"
+                      : reportPrice
+                        ? `$${reportPrice}`
+                        : "Unavailable"}
+                  </strong>
+                </div>
+                {loading ? (
+                  <button
+                    type="button"
+                    className="button button-dark form-button"
+                    disabled
+                    aria-label="Pay button will be enabled when the report check finishes"
+                  >
+                    Pay <CreditCard className="action-icon" aria-hidden="true" />
+                  </button>
+                ) : !recordsAvailable ? (
+                  <p className="form-message">
+                    History unavailable. Keep your free vehicle preview; no
+                    payment is needed.
+                  </p>
+                ) : showPaymentOptions && reportPrice && quoteId ? (
+                  <>
+                    <div className="coupon-box">
+                      <label htmlFor="coupon-code">
+                        Coupon code <span>Optional</span>
+                      </label>
+                      <div className="coupon-row">
+                        <input
+                          id="coupon-code"
+                          value={coupon}
+                          onChange={(event) => {
+                            setCoupon(event.target.value.toUpperCase());
+                            setCouponStatus("");
+                          }}
+                          placeholder="AUTO-FREE-XXXXXX"
+                          autoCapitalize="characters"
+                          disabled={couponLoading}
+                        />
+                        <button
+                          type="button"
+                          className="button button-dark"
+                          onClick={applyCoupon}
+                          disabled={couponLoading}
+                        >
+                          {couponLoading ? "Applying..." : "Apply"}
+                        </button>
+                      </div>
+                      {couponStatus && (
+                        <p className="form-message" role="status">
+                          {couponStatus}
+                        </p>
+                      )}
+                    </div>
+                    <PayPalCardCheckout
+                      vin={vin.replace(/\s/g, "").toUpperCase()}
+                      email={email}
+                      price={reportPrice}
+                      quoteId={quoteId}
+                      onComplete={paymentCompleted}
+                      onError={paymentFailed}
+                    />
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    className="button button-dark form-button"
+                    onClick={() => {
+                      trackMeta("InitiateCheckout", {
+                        value: Number(reportPrice),
+                        currency: "USD",
+                        content_name: "Vehicle report",
+                      });
+                      setShowPaymentOptions(true);
+                    }}
+                    disabled={loading}
+                  >
+                    Pay securely <CreditCard className="action-icon" aria-hidden="true" />
+                  </button>
+                )}
+                <p className="unlock-note">
+                  Have a coupon? Open checkout, enter the code, and the report
+                  unlocks without PayPal or card details.
+                </p>
+              </div>
+            )}
+            <p className="form-terms">
+              The preview identifies the vehicle. The paid report only appears
+              when record data is available, and the price is verified again at
+              checkout.
+            </p>
+          </form>
+        </div>
+      </section>
+
+      <section className="faq-section container" id="faq">
+        <div className="faq-intro">
+          <p className="eyebrow">Plain answers</p>
+          <h2>
+            Before you pay,
+            <br />
+            <em>read this.</em>
+          </h2>
+        </div>
+        <div className="faq-list">
+          {faqs.map(([question, answer]) => (
+            <details key={question}>
+              <summary>
+                {question}
+                <span>+</span>
+              </summary>
+              <p>{answer}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="contact-section" id="contact">
+        <div className="container contact-layout">
+          <div>
+            <p className="eyebrow">Contact us</p>
+            <h2>Need help with<br /><em>your report?</em></h2>
+            <p>Send us a message and include the email address where you would like to receive a reply. We aim to reply in under 1 hour.</p>
+          </div>
+          <form className="contact-form" onSubmit={submitContact}>
+            <label htmlFor="contact-email">Email address</label>
+            <input
+              id="contact-email"
+              type="email"
+              value={contactEmail}
+              onChange={(event) => setContactEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              maxLength={254}
+              required
+            />
+            <label htmlFor="contact-message">Message</label>
+            <textarea
+              id="contact-message"
+              value={contactMessage}
+              onChange={(event) => setContactMessage(event.target.value)}
+              placeholder="How can we help?"
+              minLength={10}
+              maxLength={2000}
+              rows={5}
+              required
+            />
+            <input className="contact-honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+            <button className="button button-dark" disabled={contactSending}>
+              {contactSending ? "Sending…" : "Send message"}
+              <ArrowUpRight className="action-icon" aria-hidden="true" />
+            </button>
+            {contactStatus && <p className="contact-status" role="status">{contactStatus}</p>}
+          </form>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <div className="container footer-inner">
+          <a className="wordmark" href="#top">
+            AUTOSCOPE<span>.</span>
+          </a>
+            <p>Vehicle history, made clearer.</p>
+          <p>
+            © 2026 Autoscope. Information is provided as available and is not a
+            guarantee of vehicle condition.
+          </p>
+        </div>
+      </footer>
+      {showStickyReport && (
+        <aside
+          className="sticky-report"
+          aria-label="Free vehicle preview shortcut"
+        >
+          <div>
+            <strong>Test before purchasing</strong>
+            <span>Free preview · Exact price after VIN check</span>
+          </div>
+          <a
+            className="button button-dark"
+            href="#start"
+            onClick={() => setShowStickyReport(false)}
+          >
+            Get my report
+            <ArrowUpRight className="action-icon" aria-hidden="true" />
+          </a>
+        </aside>
+      )}
+    </main>
+  );
+}
